@@ -1,0 +1,6 @@
+.recon/
+.playwright-mcp/
+.claude/
+design-system/
+memory/
+*.log
