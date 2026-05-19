@@ -13,6 +13,29 @@ import { useCart } from "@/lib/cart/store";
 import { formatBRL } from "@/lib/utils";
 import type { PaymentMethodKey } from "@/types";
 
+function maskCpf(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  return d
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/(\d{3})\.(\d{3})\.(\d{3})(\d{1,2})$/, "$1.$2.$3-$4");
+}
+
+function maskPhone(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 10) {
+    return d.replace(/(\d{2})(\d{0,4})(\d{0,4}).*/, (_, a, b, c) =>
+      [a && `(${a}`, a && a.length === 2 ? ") " : "", b, c && `-${c}`].filter(Boolean).join(""),
+    );
+  }
+  return d.replace(/(\d{2})(\d{5})(\d{0,4}).*/, (_, a, b, c) =>
+    [`(${a}) `, b, c && `-${c}`].filter(Boolean).join(""),
+  );
+}
+
+const CPF_DIGITS = /^\d{11}$/;
+const PHONE_DIGITS = /^\d{10,11}$/;
+
 export default function CheckoutPage() {
   const items = useCart((s) => s.items);
   const subtotal = useCart((s) => s.subtotalCents());
@@ -20,6 +43,8 @@ export default function CheckoutPage() {
   const [method, setMethod] = useState<PaymentMethodKey>("pix");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [cellphone, setCellphone] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -27,11 +52,19 @@ export default function CheckoutPage() {
 
   const total = useMemo(() => Math.max(0, subtotal - discount), [subtotal, discount]);
 
+  const cpfDigits = taxId.replace(/\D/g, "");
+  const phoneDigits = cellphone.replace(/\D/g, "");
+
   const canPay =
-    accepted && name.trim().length > 2 && /\S+@\S+\.\S+/.test(email) && items.length > 0 && total > 0;
+    accepted &&
+    name.trim().length > 2 &&
+    /\S+@\S+\.\S+/.test(email) &&
+    CPF_DIGITS.test(cpfDigits) &&
+    PHONE_DIGITS.test(phoneDigits) &&
+    items.length > 0 &&
+    total > 0;
 
   async function applyCoupon(code: string): Promise<boolean> {
-    // Stub: simple demo coupon
     if (code === "ENGAJA10") {
       setDiscount(Math.round(subtotal * 0.1));
       return true;
@@ -51,21 +84,25 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           email,
           fullName: name,
+          taxId: cpfDigits,
+          cellphone: phoneDigits,
           method,
           items,
           discountCents: discount,
         }),
       });
-      if (!res.ok) {
-        const t = await res.json().catch(() => ({ error: "Falha no checkout" }));
-        throw new Error(t.error || "Falha no checkout");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Falha no checkout");
+
+      if (method === "pix" && data.orderId) {
+        window.location.href = `/checkout/success?order=${data.orderId}&pix=1`;
+        return;
       }
-      const data = (await res.json()) as { redirectUrl?: string; orderId: string };
       if (data.redirectUrl) {
         window.location.href = data.redirectUrl;
-      } else {
-        window.location.href = `/checkout/success?order=${data.orderId}`;
+        return;
       }
+      window.location.href = `/checkout/success?order=${data.orderId}`;
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro inesperado");
       setLoading(false);
@@ -94,8 +131,8 @@ export default function CheckoutPage() {
 
           <section className="rounded-[var(--radius)] border border-border bg-card p-5 md:p-6">
             <h2 className="text-sm font-semibold mb-3">Informações de contato</h2>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5 md:col-span-2">
                 <Label htmlFor="name">Nome completo</Label>
                 <Input
                   id="name"
@@ -104,7 +141,7 @@ export default function CheckoutPage() {
                   autoComplete="name"
                 />
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 md:col-span-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -112,6 +149,28 @@ export default function CheckoutPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="taxId">CPF</Label>
+                <Input
+                  id="taxId"
+                  inputMode="numeric"
+                  placeholder="000.000.000-00"
+                  value={taxId}
+                  onChange={(e) => setTaxId(maskCpf(e.target.value))}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cellphone">Telefone</Label>
+                <Input
+                  id="cellphone"
+                  inputMode="tel"
+                  placeholder="(00) 00000-0000"
+                  value={cellphone}
+                  onChange={(e) => setCellphone(maskPhone(e.target.value))}
+                  autoComplete="tel"
                 />
               </div>
             </div>

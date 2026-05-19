@@ -1,25 +1,29 @@
-import type { PaymentProvider, CheckoutInput, CheckoutResult, WebhookEvent } from "./types";
-import { env } from "@/lib/env";
-
-// Skeleton — uses Stripe Checkout Sessions. Install `stripe` package when activating.
-// import Stripe from "stripe";
+import type {
+  PaymentProvider,
+  CheckoutInput,
+  CheckoutResult,
+  PixQrCodeResult,
+  WebhookEvent,
+  WebhookVerifyContext,
+  PaymentStatus,
+} from "./types";
 
 export const StripeProvider: PaymentProvider = {
   name: "stripe",
 
-  async createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
-    if (!env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY missing");
-    // const stripe = new Stripe(env.STRIPE_SECRET_KEY);
-    // const session = await stripe.checkout.sessions.create({...});
-    throw new Error("Stripe adapter not yet wired — install `stripe` package and uncomment imports.");
+  async createCheckout(_input: CheckoutInput): Promise<CheckoutResult> {
+    throw new Error("Stripe adapter not yet wired");
   },
 
-  async verifyWebhook(rawBody: string, signature: string): Promise<WebhookEvent> {
-    if (!env.STRIPE_WEBHOOK_SECRET) throw new Error("STRIPE_WEBHOOK_SECRET missing");
+  async createPixQrCode(_input: CheckoutInput): Promise<PixQrCodeResult> {
+    throw new Error("Stripe does not support PIX QR Code");
+  },
+
+  async verifyWebhook(_ctx: WebhookVerifyContext): Promise<WebhookEvent> {
     throw new Error("Stripe webhook verification pending");
   },
 
-  async getPaymentStatus(externalPaymentId: string): Promise<WebhookEvent["type"]> {
+  async getPaymentStatus(_id: string): Promise<PaymentStatus> {
     throw new Error("Stripe getPaymentStatus pending");
   },
 };

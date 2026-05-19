@@ -3,34 +3,50 @@ import type { CartItem, PaymentMethodKey } from "@/types";
 export type CheckoutInput = {
   email: string;
   fullName: string;
+  taxId: string;
+  cellphone: string;
   items: CartItem[];
   totalCents: number;
-  method: PaymentMethodKey;
   orderId: string;
+  description?: string;
   successUrl: string;
   cancelUrl: string;
 };
 
 export type CheckoutResult = {
   externalPaymentId: string;
-  // Hosted checkout URL (Stripe) OR null (PIX inline flow)
-  redirectUrl?: string;
-  // PIX-specific
-  pixCode?: string;
-  pixQrCodeUrl?: string;
+  redirectUrl: string;
+};
+
+export type PixQrCodeResult = {
+  externalPaymentId: string;
+  pixCode: string;
+  pixQrCodeUrl: string;
   expiresAt?: string;
 };
 
+export type PaymentStatus = "pending" | "paid" | "failed" | "expired" | "refunded";
+
 export type WebhookEvent = {
-  type: "payment.paid" | "payment.failed" | "payment.expired" | "payment.refunded";
+  id: string;
+  type: Exclude<PaymentStatus, "pending">;
+  rawEvent: string;
   externalPaymentId: string;
   orderId: string;
+  devMode: boolean;
   rawPayload: unknown;
+};
+
+export type WebhookVerifyContext = {
+  rawBody: string;
+  headers: Headers;
+  query: URLSearchParams;
 };
 
 export interface PaymentProvider {
   name: "abacate" | "stripe";
   createCheckout(input: CheckoutInput): Promise<CheckoutResult>;
-  verifyWebhook(rawBody: string, signature: string): Promise<WebhookEvent>;
-  getPaymentStatus(externalPaymentId: string): Promise<WebhookEvent["type"]>;
+  createPixQrCode(input: CheckoutInput): Promise<PixQrCodeResult>;
+  verifyWebhook(ctx: WebhookVerifyContext): Promise<WebhookEvent>;
+  getPaymentStatus(externalPaymentId: string, kind: PaymentMethodKey): Promise<PaymentStatus>;
 }

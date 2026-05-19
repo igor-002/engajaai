@@ -37,6 +37,8 @@ export type Order = {
   userId: string | null;
   email: string;
   fullName: string;
+  customerTaxId?: string;
+  customerCellphone?: string;
   items: CartItem[];
   subtotalCents: number;
   discountCents: number;
@@ -47,5 +49,6 @@ export type Order = {
   externalPaymentId?: string;
   pixCode?: string;
   pixQrCodeUrl?: string;
+  expiresAt?: string;
   createdAt: string;
 };

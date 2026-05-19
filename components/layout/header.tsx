@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { Headphones, LogIn, Search, User2 } from "lucide-react";
+import { Headphones, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BrandMark } from "@/components/icons/brand";
 import { CartButton } from "@/components/cart/icon-button";
+import { UserMenu } from "@/components/layout/user-menu";
 
 export function Header() {
   const router = useRouter();
@@ -65,12 +66,7 @@ export function Header() {
               <span className="hidden md:inline">Suporte</span>
             </a>
           </Button>
-          <Button variant="secondary" size="sm" asChild>
-            <Link href="/login" aria-label="Entrar">
-              <LogIn />
-              <span className="hidden md:inline">Entrar</span>
-            </Link>
-          </Button>
+          <UserMenu />
           <CartButton />
         </nav>
       </div>
