@@ -12,6 +12,10 @@ const serverSchema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  ADMIN_MFA_ENFORCED: z
+    .string()
+    .optional()
+    .transform((v) => v === "true" || v === "1"),
 });
 
 const clientSchema = z.object({
@@ -33,6 +37,7 @@ export const env = serverSchema.parse({
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+  ADMIN_MFA_ENFORCED: process.env.ADMIN_MFA_ENFORCED,
 });
 
 export const clientEnv = clientSchema.parse({

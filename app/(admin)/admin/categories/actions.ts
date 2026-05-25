@@ -3,8 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { isAdminEmail } from "@/lib/data/admin";
 import {
   createCategory,
   updateCategory,
@@ -13,14 +11,8 @@ import {
   type CategoryInput,
 } from "@/lib/data/categories";
 import { uploadImage, deleteImageByUrl } from "@/lib/storage";
-
-async function requireAdmin() {
-  const supa = await createSupabaseServerClient();
-  if (!supa) throw new Error("Supabase indisponível");
-  const { data } = await supa.auth.getUser();
-  const user = data.user;
-  if (!user || !(await isAdminEmail(user.email))) throw new Error("Acesso negado");
-}
+import { requireAdminAal2 } from "@/lib/auth/admin-guard";
+import { logAdminAction } from "@/lib/auth/audit";
 
 const Schema = z.object({
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
@@ -53,18 +45,25 @@ function getUploadedFile(formData: FormData): File | null {
 }
 
 export async function createCategoryAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAal2();
   const base = parseForm(formData);
   const file = getUploadedFile(formData);
   const imageUrl = file ? await uploadImage(file, "categories") : null;
-  await createCategory({ ...base, imageUrl });
+  const id = await createCategory({ ...base, imageUrl });
+  await logAdminAction({
+    action: "category.create",
+    target_table: "categories",
+    target_id: id ?? base.slug,
+    success: true,
+    meta: { slug: base.slug, name: base.name },
+  });
   revalidatePath("/admin/categories");
   revalidatePath("/");
   redirect("/admin/categories");
 }
 
 export async function updateCategoryAction(id: string, formData: FormData) {
-  await requireAdmin();
+  await requireAdminAal2();
   const base = parseForm(formData);
   const existing = await getCategoryById(id);
   if (!existing) throw new Error("Categoria não encontrada");
@@ -82,16 +81,30 @@ export async function updateCategoryAction(id: string, formData: FormData) {
   }
 
   await updateCategory(id, { ...base, imageUrl });
+  await logAdminAction({
+    action: "category.update",
+    target_table: "categories",
+    target_id: id,
+    success: true,
+    meta: { slug: base.slug },
+  });
   revalidatePath("/admin/categories");
   revalidatePath("/");
   redirect("/admin/categories");
 }
 
 export async function deleteCategoryAction(id: string) {
-  await requireAdmin();
+  await requireAdminAal2();
   const existing = await getCategoryById(id);
   await deleteCategory(id);
   if (existing?.imageUrl) await deleteImageByUrl(existing.imageUrl);
+  await logAdminAction({
+    action: "category.delete",
+    target_table: "categories",
+    target_id: id,
+    success: true,
+    meta: { slug: existing?.slug },
+  });
   revalidatePath("/admin/categories");
   revalidatePath("/");
 }

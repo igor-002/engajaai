@@ -1,8 +1,5 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Home, Package, Tags, ShoppingBag, ShieldOff } from "lucide-react";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { isAdminEmail } from "@/lib/data/admin";
+import { Home, Package, Tags, ShoppingBag, Users } from "lucide-react";
 
 export const metadata = { title: "Admin · EngajaAI" };
 
@@ -11,32 +8,12 @@ const NAV = [
   { href: "/admin/products", label: "Produtos", Icon: Package },
   { href: "/admin/categories", label: "Categorias", Icon: Tags },
   { href: "/admin/orders", label: "Pedidos", Icon: ShoppingBag },
+  { href: "/admin/team", label: "Admins", Icon: Users },
 ];
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supa = await createSupabaseServerClient();
-  const { data } = supa ? await supa.auth.getUser() : { data: { user: null } };
-  const user = data.user;
-
-  if (!user) {
-    redirect("/login?next=/admin");
-  }
-
-  const allowed = await isAdminEmail(user.email);
-  if (!allowed) {
-    return (
-      <section className="container-x max-w-md py-16 text-center">
-        <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-destructive/15 text-destructive mb-4">
-          <ShieldOff size={28} />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">Acesso negado</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sua conta ({user.email}) não tem permissão de administrador.
-        </p>
-      </section>
-    );
-  }
-
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  // Auth, admin membership and aal2 are enforced by middleware (/admin/* gate).
+  // This layout assumes the request is already authorized.
   return (
     <div className="container-x py-6 md:py-8">
       <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">

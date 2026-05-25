@@ -3,8 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { isAdminEmail } from "@/lib/data/admin";
 import {
   createProduct,
   updateProduct,
@@ -14,14 +12,8 @@ import {
 } from "@/lib/data/products";
 import { uploadImage, deleteImageByUrl } from "@/lib/storage";
 import type { PaymentMethodKey } from "@/types";
-
-async function requireAdmin() {
-  const supa = await createSupabaseServerClient();
-  if (!supa) throw new Error("Supabase indisponível");
-  const { data } = await supa.auth.getUser();
-  const user = data.user;
-  if (!user || !(await isAdminEmail(user.email))) throw new Error("Acesso negado");
-}
+import { requireAdminAal2 } from "@/lib/auth/admin-guard";
+import { logAdminAction } from "@/lib/auth/audit";
 
 const Schema = z.object({
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "slug deve ser minúsculo, números e hífens"),
@@ -73,18 +65,25 @@ function getUploadedFile(formData: FormData): File | null {
 }
 
 export async function createProductAction(formData: FormData) {
-  await requireAdmin();
+  await requireAdminAal2();
   const base = parseForm(formData);
   const file = getUploadedFile(formData);
   const imageUrl = file ? await uploadImage(file, "products") : null;
-  await createProduct({ ...base, imageUrl });
+  const id = await createProduct({ ...base, imageUrl });
+  await logAdminAction({
+    action: "product.create",
+    target_table: "products",
+    target_id: id ?? base.slug,
+    success: true,
+    meta: { slug: base.slug, name: base.name },
+  });
   revalidatePath("/admin/products");
   revalidatePath("/");
   redirect("/admin/products");
 }
 
 export async function updateProductAction(id: string, formData: FormData) {
-  await requireAdmin();
+  await requireAdminAal2();
   const base = parseForm(formData);
   const existing = await getProductById(id);
   if (!existing) throw new Error("Produto não encontrado");
@@ -102,6 +101,13 @@ export async function updateProductAction(id: string, formData: FormData) {
   }
 
   await updateProduct(id, { ...base, imageUrl });
+  await logAdminAction({
+    action: "product.update",
+    target_table: "products",
+    target_id: id,
+    success: true,
+    meta: { slug: base.slug },
+  });
   revalidatePath("/admin/products");
   revalidatePath(`/admin/products/${id}`);
   revalidatePath("/");
@@ -109,10 +115,17 @@ export async function updateProductAction(id: string, formData: FormData) {
 }
 
 export async function deleteProductAction(id: string) {
-  await requireAdmin();
+  await requireAdminAal2();
   const existing = await getProductById(id);
   await deleteProduct(id);
   if (existing?.imageUrl) await deleteImageByUrl(existing.imageUrl);
+  await logAdminAction({
+    action: "product.delete",
+    target_table: "products",
+    target_id: id,
+    success: true,
+    meta: { slug: existing?.slug },
+  });
   revalidatePath("/admin/products");
   revalidatePath("/");
 }

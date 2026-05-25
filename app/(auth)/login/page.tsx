@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { checkAdminEmail } from "./actions";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,6 +20,12 @@ export default function LoginPage() {
     e.preventDefault();
     setErr(null);
     setSubmitting(true);
+    const normalized = email.trim().toLowerCase();
+    if (await checkAdminEmail(normalized)) {
+      setSubmitting(false);
+      setErr("Esta conta é admin. Use /admin/login.");
+      return;
+    }
     const supa = createSupabaseBrowserClient();
     if (!supa) {
       setErr("Auth não configurado. Defina NEXT_PUBLIC_SUPABASE_URL e ANON_KEY.");
@@ -27,7 +34,7 @@ export default function LoginPage() {
     }
     const redirectTo = `${window.location.origin}/auth/callback`;
     const { error } = await supa.auth.signInWithOtp({
-      email,
+      email: normalized,
       options: { emailRedirectTo: redirectTo },
     });
     setSubmitting(false);
