@@ -9,6 +9,28 @@ import type { Product, Category, PaymentMethodKey } from "@/types";
 
 type Mode = "create" | "edit";
 
+function slugify(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// cents (int) -> reais string for input, e.g. 2990 -> "29,90"
+function centsToReais(cents?: number | null): string {
+  if (cents == null) return "";
+  return (cents / 100).toFixed(2).replace(".", ",");
+}
+
+// reais input string -> cents int, e.g. "29,90" -> 2990
+function reaisToCents(value: string): number {
+  const normalized = value.replace(/\./g, "").replace(",", ".").trim();
+  return Math.round(Number(normalized) * 100);
+}
+
 export function ProductForm({
   mode,
   categories,
@@ -25,6 +47,26 @@ export function ProductForm({
   const [previewUrl, setPreviewUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [removeImage, setRemoveImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [name, setName] = useState(initial?.name ?? "");
+  const [slug, setSlug] = useState(initial?.slug ?? "");
+  // slug follows name until user edits slug manually (or editing existing product)
+  const [slugLocked, setSlugLocked] = useState(mode === "edit");
+  const [priceReais, setPriceReais] = useState(centsToReais(initial?.priceCents));
+  const [originalPriceReais, setOriginalPriceReais] = useState(
+    centsToReais(initial?.originalPriceCents)
+  );
+
+  function onNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setName(value);
+    if (!slugLocked) setSlug(slugify(value));
+  }
+
+  function onSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSlugLocked(true);
+    setSlug(slugify(e.target.value));
+  }
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -55,6 +97,13 @@ export function ProductForm({
     setSubmitting(true);
     setErr(null);
     const form = new FormData(e.currentTarget);
+    // visible price fields are in reais; server expects cents
+    form.set("priceCents", String(reaisToCents(priceReais)));
+    if (originalPriceReais.trim()) {
+      form.set("originalPriceCents", String(reaisToCents(originalPriceReais)));
+    } else {
+      form.delete("originalPriceCents");
+    }
     try {
       await action(form);
     } catch (e) {
@@ -68,7 +117,7 @@ export function ProductForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5 md:col-span-2">
           <Label htmlFor="name">Nome</Label>
-          <Input id="name" name="name" required defaultValue={initial?.name} />
+          <Input id="name" name="name" required value={name} onChange={onNameChange} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="slug">Slug (URL)</Label>
@@ -77,8 +126,10 @@ export function ProductForm({
             name="slug"
             required
             pattern="[a-z0-9-]+"
-            defaultValue={initial?.slug}
+            value={slug}
+            onChange={onSlugChange}
           />
+          <p className="text-xs text-muted-foreground">Preenche sozinho pelo nome. Pode editar.</p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="categoryId">Categoria</Label>
@@ -108,24 +159,24 @@ export function ProductForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="priceCents">Preço (centavos)</Label>
+          <Label htmlFor="priceReais">Preço (R$)</Label>
           <Input
-            id="priceCents"
-            name="priceCents"
-            type="number"
-            min={0}
+            id="priceReais"
+            inputMode="decimal"
+            placeholder="29,90"
             required
-            defaultValue={initial?.priceCents}
+            value={priceReais}
+            onChange={(e) => setPriceReais(e.target.value)}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="originalPriceCents">Preço original (centavos, opcional)</Label>
+          <Label htmlFor="originalPriceReais">Preço original (R$, opcional)</Label>
           <Input
-            id="originalPriceCents"
-            name="originalPriceCents"
-            type="number"
-            min={0}
-            defaultValue={initial?.originalPriceCents ?? ""}
+            id="originalPriceReais"
+            inputMode="decimal"
+            placeholder="49,90"
+            value={originalPriceReais}
+            onChange={(e) => setOriginalPriceReais(e.target.value)}
           />
         </div>
         <div className="space-y-1.5">
