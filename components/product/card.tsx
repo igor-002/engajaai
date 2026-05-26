@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import type { Product } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -17,13 +18,22 @@ export function ProductCard({ product }: { product: Product }) {
       className="group flex flex-col rounded-[var(--radius)] border border-border bg-card overflow-hidden hover:bg-accent transition-colors"
     >
       <div className="aspect-square w-full bg-muted relative overflow-hidden">
-        {/* Placeholder — owner will upload images later */}
-        <div
-          className="absolute inset-0 grid place-items-center text-muted-foreground text-xs"
-          aria-hidden="true"
-        >
-          imagem
-        </div>
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className="object-cover transition-transform group-hover:scale-105"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 grid place-items-center text-muted-foreground text-xs"
+            aria-hidden="true"
+          >
+            imagem
+          </div>
+        )}
         {off > 0 && (
           <Badge variant="primary" className="absolute top-2 left-2">
             -{off}% OFF

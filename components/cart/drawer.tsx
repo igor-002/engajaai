@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { X, Trash2, Minus, Plus, ShoppingBag } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCart } from "@/lib/cart/store";
@@ -39,11 +40,23 @@ export function CartDrawer() {
                   key={item.productId}
                   className="flex gap-3 rounded-[var(--radius)] border border-border p-3"
                 >
-                  <div
-                    className="h-16 w-16 shrink-0 rounded bg-muted grid place-items-center text-[10px] text-muted-foreground"
-                    aria-hidden="true"
-                  >
-                    img
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-muted">
+                    {item.imageUrl ? (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span
+                        className="absolute inset-0 grid place-items-center text-[10px] text-muted-foreground"
+                        aria-hidden="true"
+                      >
+                        img
+                      </span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium line-clamp-2">{item.name}</p>

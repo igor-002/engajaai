@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import { formatBRL } from "@/lib/utils";
 import type { CartItem } from "@/types";
@@ -30,11 +31,23 @@ export function OrderSummary({
         <ul className="space-y-3" aria-label="Itens do pedido">
           {items.map((i) => (
             <li key={i.productId} className="flex items-center gap-3 text-sm">
-              <div
-                className="h-12 w-12 shrink-0 rounded bg-muted grid place-items-center text-[10px] text-muted-foreground"
-                aria-hidden="true"
-              >
-                img
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded bg-muted">
+                {i.imageUrl ? (
+                  <Image
+                    src={i.imageUrl}
+                    alt={i.name}
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span
+                    className="absolute inset-0 grid place-items-center text-[10px] text-muted-foreground"
+                    aria-hidden="true"
+                  >
+                    img
+                  </span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="line-clamp-2">{i.name}</p>

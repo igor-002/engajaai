@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, ShieldCheck, Zap, CreditCard, Package, Headphones } from "lucide-react";
 import { getProductBySlug, getCategoryBySlug } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
@@ -54,19 +55,21 @@ export default async function ProductPage({ params }: Params) {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
         {/* Image gallery */}
         <div className="lg:col-span-2">
-          <div className="aspect-square w-full rounded-[var(--radius)] border border-border bg-muted grid place-items-center text-muted-foreground text-sm">
-            imagem do produto
-          </div>
-          <div className="mt-3 grid grid-cols-4 gap-2">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="aspect-square rounded-md border border-border bg-muted grid place-items-center text-[10px] text-muted-foreground"
-                aria-hidden="true"
-              >
-                img {i + 1}
+          <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius)] border border-border bg-muted">
+            {product.imageUrl ? (
+              <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div className="absolute inset-0 grid place-items-center text-muted-foreground text-sm">
+                imagem do produto
               </div>
-            ))}
+            )}
           </div>
         </div>
 
