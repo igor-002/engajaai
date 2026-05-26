@@ -38,7 +38,7 @@ export function OrderSummary({
                     alt={i.name}
                     fill
                     sizes="48px"
-                    className="object-cover"
+                    className="object-contain"
                   />
                 ) : (
                   <span

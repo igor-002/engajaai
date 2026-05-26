@@ -55,7 +55,7 @@ export default async function ProductPage({ params }: Params) {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
         {/* Image gallery */}
         <div className="lg:col-span-2">
-          <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius)] border border-border bg-muted">
+          <div className="relative aspect-video w-full overflow-hidden rounded-[var(--radius)] border border-border bg-muted">
             {product.imageUrl ? (
               <Image
                 src={product.imageUrl}

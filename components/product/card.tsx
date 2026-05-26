@@ -17,7 +17,7 @@ export function ProductCard({ product }: { product: Product }) {
       href={`/product/${product.slug}`}
       className="group flex flex-col rounded-[var(--radius)] border border-border bg-card overflow-hidden hover:bg-accent transition-colors"
     >
-      <div className="aspect-square w-full bg-muted relative overflow-hidden">
+      <div className="aspect-video w-full bg-muted relative overflow-hidden">
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}

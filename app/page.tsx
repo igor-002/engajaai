@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, MessageCircle, ShieldCheck, Zap, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductGrid } from "@/components/product/grid";
@@ -61,11 +62,18 @@ export default async function HomePage() {
               href={`/category/${c.slug}`}
               className="group flex flex-col items-center gap-3 rounded-[var(--radius)] border border-border bg-card p-4 hover:bg-accent transition-colors"
             >
-              <div
-                className="h-16 w-16 rounded-full bg-muted grid place-items-center text-muted-foreground"
-                aria-hidden="true"
-              >
-                <span className="text-xs">{c.name.slice(0, 1)}</span>
+              <div className="relative h-16 w-16 overflow-hidden rounded-full bg-muted grid place-items-center text-muted-foreground">
+                {c.imageUrl ? (
+                  <Image
+                    src={c.imageUrl}
+                    alt={c.name}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-xs" aria-hidden="true">{c.name.slice(0, 1)}</span>
+                )}
               </div>
               <span className="text-sm font-medium text-center">{c.name}</span>
             </Link>
