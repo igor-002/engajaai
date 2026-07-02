@@ -51,7 +51,7 @@ export default async function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="container-x py-12 md:py-16">
+      <section id="categorias" className="container-x py-12 md:py-16 scroll-mt-20">
         <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">
           Categorias populares
         </h2>
@@ -86,10 +86,10 @@ export default async function HomePage() {
         <div className="flex items-end justify-between mb-6">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Em destaque</h2>
           <Link
-            href="/category/google-ads"
+            href="#categorias"
             className="text-sm text-primary hover:underline inline-flex items-center gap-1"
           >
-            Ver todas <ArrowRight size={14} />
+            Ver categorias <ArrowRight size={14} />
           </Link>
         </div>
         <ProductGrid products={featured} />

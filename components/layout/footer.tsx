@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Instagram, MessageCircle } from "lucide-react";
 import { BrandMark } from "@/components/icons/brand";
+import { getCategories } from "@/lib/data";
 
-export function Footer() {
+export async function Footer() {
   const year = new Date().getFullYear();
+  const categories = (await getCategories().catch(() => [])).slice(0, 6);
   return (
     <footer className="border-t border-border mt-16">
       <div className="container-x py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -21,11 +23,17 @@ export function Footer() {
         <nav aria-label="Links rápidos" className="space-y-2">
           <h3 className="text-sm font-semibold">Loja</h3>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li><Link href="/category/meta-ads" className="hover:text-foreground">Meta Ads</Link></li>
-            <li><Link href="/category/google-ads" className="hover:text-foreground">Google Ads</Link></li>
-            <li><Link href="/category/tiktok-ads" className="hover:text-foreground">TikTok Ads</Link></li>
-            <li><Link href="/category/proxys" className="hover:text-foreground">Proxys</Link></li>
-            <li><Link href="/category/variados" className="hover:text-foreground">Variados</Link></li>
+            {categories.length > 0 ? (
+              categories.map((c) => (
+                <li key={c.id}>
+                  <Link href={`/category/${c.slug}`} className="hover:text-foreground">
+                    {c.name}
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <li><Link href="/" className="hover:text-foreground">Ver produtos</Link></li>
+            )}
           </ul>
         </nav>
 
