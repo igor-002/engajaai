@@ -25,11 +25,29 @@ export function SetPasswordClient() {
       setErr("Auth indisponível");
       return;
     }
-    // Supabase strips the recovery / invite token from the URL and creates a session automatically.
-    supa.auth.getUser().then(({ data }) => {
+
+    (async () => {
+      const url = new URL(window.location.href);
+      const linkErr = url.searchParams.get("error_description") ?? url.searchParams.get("error");
+      const code = url.searchParams.get("code");
+
+      if (linkErr) {
+        setErr(linkErr);
+        setSessionReady(true);
+        return;
+      }
+
+      // PKCE recovery/invite links arrive with ?code=; exchange it for a session.
+      if (code) {
+        await supa.auth.exchangeCodeForSession(code).catch(() => null);
+        // Clean the code out of the URL so a refresh can't retry a spent code.
+        window.history.replaceState({}, "", url.pathname);
+      }
+
+      const { data } = await supa.auth.getUser();
       setSessionEmail(data.user?.email ?? null);
       setSessionReady(true);
-    });
+    })();
   }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
