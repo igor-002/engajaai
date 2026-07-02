@@ -75,6 +75,12 @@ export async function POST(request: Request) {
     (provider.name === "stripe" && !!env.STRIPE_SECRET_KEY);
 
   if (!providerReady) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Pagamento indisponível no momento. Tente novamente em instantes." },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({
       orderId: order.id,
       stub: true,
